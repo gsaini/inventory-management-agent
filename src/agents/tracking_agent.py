@@ -12,12 +12,11 @@ from datetime import datetime
 from typing import Annotated, TypedDict, Literal
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from src.config import get_settings
+from src.llm import get_llm_with_tools
 from src.tools.inventory_tools import (
     get_stock_level,
     update_stock_quantity,
@@ -25,9 +24,6 @@ from src.tools.inventory_tools import (
     allocate_stock,
     deallocate_stock,
 )
-
-
-settings = get_settings()
 
 
 class TrackingAgentState(TypedDict):
@@ -50,12 +46,8 @@ tracking_tools = [
 ]
 
 
-# Create the LLM with tools bound
-llm = ChatOpenAI(
-    model=settings.openai_model,
-    temperature=0,
-    api_key=settings.openai_api_key,
-).bind_tools(tracking_tools)
+# Create the LLM with tools bound (uses configured provider)
+llm = get_llm_with_tools(tracking_tools)
 
 
 SYSTEM_PROMPT = """You are the Tracking Agent for a warehouse inventory management system.

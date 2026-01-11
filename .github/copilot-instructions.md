@@ -8,15 +8,28 @@ This is a **multi-agent warehouse management system** built with LangChain/LangG
 - **LangChain 0.1.0+ / LangGraph** - AI agent framework with tool-calling
 - **FastAPI** - REST API backend (async)
 - **SQLAlchemy 2.0** - ORM with async support (asyncpg for PostgreSQL)
-- **OpenAI GPT-4o** - Primary LLM (configurable via `OPENAI_MODEL`)
+- **LLM (Multi-provider)** - Supports Ollama (local), OpenAI, vLLM, LM Studio, HuggingFace
 - **NetworkX** - Graph-based pick route optimization (TSP)
 - **Pydantic v2** - Data validation and settings
 - **PostgreSQL** - Database (with optional GIS extensions)
+
+## LLM Provider Options
+The project supports multiple LLM backends via `src/llm.py`:
+
+| Provider | Type | Setup |
+|----------|------|-------|
+| **Ollama** (default) | Local/Open Source | `ollama pull llama3.1:8b && ollama serve` |
+| **OpenAI** | Cloud | Set `OPENAI_API_KEY` |
+| **OpenAI-Compatible** | Local | vLLM, LM Studio, LocalAI, text-gen-webui |
+| **HuggingFace** | Cloud | Set `HUGGINGFACE_API_KEY` |
+
+Configure via `LLM_PROVIDER` in `.env` (values: `ollama`, `openai`, `openai_compatible`, `huggingface`)
 
 ## Project Structure
 ```
 src/
 ├── config.py                  # Settings from environment variables
+├── llm.py                     # Multi-provider LLM factory (Ollama, OpenAI, vLLM, HF)
 ├── main.py                    # FastAPI entry point (uvicorn)
 ├── models/
 │   ├── inventory.py           # 12 SQLAlchemy models, 5 enums
@@ -41,6 +54,7 @@ src/
     └── helpers.py             # generate_sku, format_currency, date helpers
 
 scripts/
+├── start.sh                   # Start script (setup, dev, seed, test commands)
 └── seed_database.py           # Populates DB with sample products, vendors, locations
 
 tests/
@@ -100,14 +114,31 @@ Each agent uses LangGraph's `StateGraph` with:
 
 ## Environment Variables (.env)
 ```bash
+# LLM Provider (ollama, openai, openai_compatible, huggingface)
+LLM_PROVIDER=ollama
+
+# Ollama (default - local open source)
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama4:scout
+
+# OpenAI (optional - cloud)
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o
+
+# Database
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/inventory_db
-SYNC_DATABASE_URL=postgresql://user:pass@localhost:5432/inventory_db
+DATABASE_SYNC_URL=postgresql://user:pass@localhost:5432/inventory_db
+
 # Optional: MQTT_BROKER_HOST, MQTT_BROKER_PORT for IoT
 ```
 
 ## Common Development Tasks
+
+### Switching LLM Provider
+1. Edit `LLM_PROVIDER` in `.env` (values: `ollama`, `openai`, `openai_compatible`, `huggingface`)
+2. For Ollama: Install from https://ollama.ai, run `ollama pull llama4:scout && ollama serve`
+3. For OpenAI: Set `OPENAI_API_KEY`
+4. For vLLM/LM Studio: Set `OPENAI_COMPATIBLE_BASE_URL`
 
 ### Adding a new tool
 1. Add function in appropriate `src/tools/*.py` with `@tool` decorator

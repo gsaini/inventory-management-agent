@@ -12,12 +12,11 @@ from datetime import datetime
 from typing import Annotated, TypedDict, Literal
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from src.config import get_settings
+from src.llm import get_llm_with_tools
 from src.tools.inventory_tools import get_stock_level
 from src.tools.replenishment_tools import (
     calculate_reorder_point,
@@ -27,9 +26,6 @@ from src.tools.replenishment_tools import (
     get_pending_purchase_orders,
     calculate_days_of_cover,
 )
-
-
-settings = get_settings()
 
 
 class ReplenishmentAgentState(TypedDict):
@@ -54,12 +50,8 @@ replenishment_tools = [
 ]
 
 
-# Create the LLM with tools bound
-llm = ChatOpenAI(
-    model=settings.openai_model,
-    temperature=0,
-    api_key=settings.openai_api_key,
-).bind_tools(replenishment_tools)
+# Create the LLM with tools bound (uses configured provider)
+llm = get_llm_with_tools(replenishment_tools)
 
 
 SYSTEM_PROMPT = """You are the Replenishment Agent for a warehouse inventory management system.

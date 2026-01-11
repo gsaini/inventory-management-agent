@@ -14,14 +14,10 @@ from typing import Annotated, TypedDict, Literal
 from enum import Enum
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 
-from src.config import get_settings
-
-
-settings = get_settings()
+from src.llm import get_llm
 
 
 class AgentType(str, Enum):
@@ -56,12 +52,8 @@ class OrchestratorState(TypedDict):
     final_response: str | None
 
 
-# Create the LLM for orchestration decisions
-llm = ChatOpenAI(
-    model=settings.openai_model,
-    temperature=0,
-    api_key=settings.openai_api_key,
-)
+# Create the LLM for orchestration decisions (uses configured provider)
+llm = get_llm()
 
 
 ORCHESTRATOR_SYSTEM_PROMPT = """You are the Orchestrator Agent for an intelligent warehouse inventory management system.

@@ -1,12 +1,28 @@
 """
 Inventory Management Agent - Configuration Module
+
+Supports multiple LLM providers:
+- ollama: Local open-source models (recommended for development)
+- openai: OpenAI API (GPT-4o, etc.)
+- openai_compatible: Any OpenAI-compatible API (vLLM, LM Studio, LocalAI)
+- huggingface: HuggingFace Inference API
 """
 
+from enum import Enum
 from functools import lru_cache
 from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class LLMProvider(str, Enum):
+    """Supported LLM providers."""
+    
+    OLLAMA = "ollama"
+    OPENAI = "openai"
+    OPENAI_COMPATIBLE = "openai_compatible"
+    HUGGINGFACE = "huggingface"
 
 
 class Settings(BaseSettings):
@@ -18,10 +34,57 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    # OpenAI Configuration
-    openai_api_key: str = Field(..., description="OpenAI API key")
-    openai_model: str = Field(default="gpt-4o", description="Primary LLM model")
-    openai_model_mini: str = Field(default="gpt-4o-mini", description="Fast LLM model")
+    # LLM Provider Selection
+    llm_provider: LLMProvider = Field(
+        default=LLMProvider.OLLAMA,
+        description="LLM provider: ollama, openai, openai_compatible, huggingface",
+    )
+
+    # Ollama Configuration (Local Open Source - Recommended)
+    ollama_base_url: str = Field(
+        default="http://localhost:11434",
+        description="Ollama server URL",
+    )
+    ollama_model: str = Field(
+        default="llama4:scout",
+        description="Primary Ollama model",
+    )
+    ollama_model_mini: str = Field(
+        default="llama4:scout",
+        description="Fast/small Ollama model",
+    )
+
+    # OpenAI-Compatible API Configuration (vLLM, LM Studio, LocalAI, etc.)
+    openai_compatible_base_url: str = Field(
+        default="http://localhost:1234/v1",
+        description="OpenAI-compatible API base URL",
+    )
+    openai_compatible_api_key: str = Field(
+        default="not-needed",
+        description="API key for OpenAI-compatible server (often not needed for local)",
+    )
+    openai_compatible_model: str = Field(
+        default="local-model",
+        description="Model name for OpenAI-compatible API",
+    )
+
+    # OpenAI Configuration (Cloud)
+    openai_api_key: Optional[str] = Field(
+        default=None,
+        description="OpenAI API key",
+    )
+    openai_model: str = Field(default="gpt-4o", description="Primary OpenAI model")
+    openai_model_mini: str = Field(default="gpt-4o-mini", description="Fast OpenAI model")
+
+    # HuggingFace Configuration
+    huggingface_api_key: Optional[str] = Field(
+        default=None,
+        description="HuggingFace API key",
+    )
+    huggingface_model: str = Field(
+        default="meta-llama/Llama-4-Scout-17B-16E-Instruct",
+        description="HuggingFace model ID",
+    )
 
     # Database Configuration
     database_url: str = Field(

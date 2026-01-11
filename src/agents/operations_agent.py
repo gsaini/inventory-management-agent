@@ -12,12 +12,11 @@ from datetime import datetime
 from typing import Annotated, TypedDict, Literal
 
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
-from src.config import get_settings
+from src.llm import get_llm_with_tools
 from src.tools.inventory_tools import (
     get_stock_level,
     get_inventory_by_location,
@@ -29,9 +28,6 @@ from src.tools.operations_tools import (
     get_warehouse_layout,
     calculate_route_distance,
 )
-
-
-settings = get_settings()
 
 
 class OperationsAgentState(TypedDict):
@@ -56,12 +52,8 @@ operations_tools = [
 ]
 
 
-# Create the LLM with tools bound
-llm = ChatOpenAI(
-    model=settings.openai_model,
-    temperature=0,
-    api_key=settings.openai_api_key,
-).bind_tools(operations_tools)
+# Create the LLM with tools bound (uses configured provider)
+llm = get_llm_with_tools(operations_tools)
 
 
 SYSTEM_PROMPT = """You are the Operations Agent for a warehouse inventory management system.
